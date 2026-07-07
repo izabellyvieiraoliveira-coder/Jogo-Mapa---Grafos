@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>As Ilhas Desconhecidas - Coloração de Grafos</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght=700&family=Cinzel:wght=500;700&family=Special+Elite&display=swap');
+
+        :root {
+            --sea: #cbd5b1;
+            --parchment: #f2e3c6;
+            --ink: #362511;
+            --gold: #c6a152;
+        }
+
+        body {
+            background-color: #1a1108;
+            color: var(--ink);
+            font-family: 'Special Elite', cursive;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background-image: radial-gradient(rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.6));
+        }
+
+        header {
+            background: var(--parchment);
+            padding: 20px;
+            border: 4px double var(--ink);
+            border-radius: 4px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.7), inset 0 0 40px rgba(184,134,11,0.2);
+            text-align: center;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        h1 { 
+            font-family: 'Cinzel Decorative', serif; 
+            margin: 0 0 5px 0; 
+            font-size: 2.2em;
+            color: #5c1e14;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .game-intro {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.03);
+            border-left: 3px solid #5c1e14;
+            padding: 12px 15px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .game-intro strong {
+            font-family: 'Cinzel', serif;
+            color: #5c1e14;
+        }
+
+        .academic-info {
+            font-size: 0.85em;
+            line-height: 1.5;
+            border-top: 2px dashed var(--ink);
+            padding-top: 10px;
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            text-align: left;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+        }
+
+        .main-game {
+            background: var(--parchment);
+            padding: 25px;
+            border: 4px double var(--ink);
+            border-radius: 4px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 50px rgba(184,134,11,0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        #msg {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            min-height: 1.5em;
+            color: #5c1e14;
+            text-align: center;
+        }
+
+        canvas {
+            background: var(--sea);
+            border: 3px solid var(--ink);
+            border-radius: 2px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 60px rgba(89,115,81,0.3);
+        }
+
+        .palette-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .palette-title {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .palette {
+            display: flex;
+            gap: 20px;
+            background: rgba(0,0,0,0.05);
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 1px dashed var(--ink);
+        }
+
+        .color-circle {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 3px solid var(--ink);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .color-circle.selected { 
+            transform: scale(1.25) translateY(-4px); 
+            border-color: #fff; 
+            box-shadow: 0 8px 12px rgba(0,0,0,0.4); 
+        }
+
+        #col-1 { background: #d62828; } 
+        #col-2 { background: #fcbf49; } 
+        #col-3 { background: #003049; } 
+        #col-4 { background: #70e000; } 
+
+        .controls {
+            margin-top: 25px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            font-size: 0.9em;
+            cursor: pointer;
+            border: 2px solid var(--ink);
+            background: #d9b48f;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+
+        button:hover { background: #ebd5b3; transform: translateY(-1px); }
+        button.active { background: var(--ink); color: var(--parchment); box-shadow: none; }
+        
+        .fail { color: #a11d1d !important; }
+        .win { color: #1e5c1e !important; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Terrae Incognitae</h1>
+        <div style="font-family: 'Cinzel', serif; font-size: 0.9em; letter-spacing: 1px; color: #5d4037; margin-top: 5px;">
+            Mapeamento Coroplético e Teoria dos Grafos
+        </div>
+
+        <div class="game-intro">
+            <strong>Sobre o Jogo:</strong> Nas Grandes Navegações, cartógrafos reais competiam para demarcar territórios ultramarinos descobertos. Neste desafio matemático, você deve colorir as ilhas do arquipélago usando o estandarte das 4 potências marítimas. 
+            <br><strong>A Regra de Ouro:</strong> Duas ilhas vizinhas que possuam uma rota comercial direta (linha tracejada) entre si <strong>não podem</strong> ostentar a mesma cor, caso contrário, uma disputa comercial será iniciada! Consiga organizar o mapa completo para vencer o desafio.
+        </div>
+
+        <div class="academic-info">
+            <div>
+                <strong>Matéria:</strong> Matemática Discreta<br>
+                <strong>Professor:</strong> Ali Reza<br>
+                <strong>Curso:</strong> Sistemas de Informação
+            </div>
+            <div style="text-align: right;">
+                <strong>Cartógrafas:</strong><br>
+                Larissa de Lima Caputt<br>
+                Izabelly Vieira de Oliveira
+            </div>
+        </div>
+    </header>
+
+    <div class="main-game">
+        <div id="msg">Trace as rotas e pinte as colônias sem cruzar cores aliadas!</div>
+        
+        <canvas id="mapCanvas" width="800" height="500"></canvas>
+
+        <div class="palette-container">
+            <div class="palette-title">Cores do Estandarte Real:</div>
+            <div class="palette">
+                <div class="color-circle selected" id="col-1" onclick="pickColor('#d62828', this)"></div>
+                <div class="color-circle" id="col-2" onclick="pickColor('#fcbf49', this)"></div>
+                <div class="color-circle" id="col-3" onclick="pickColor('#003049', this)"></div>
+                <div class="color-circle" id="col-4" onclick="pickColor('#70e000', this)"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="changeDifficulty('easy', this)">Novo Mundo (Fácil)</button>
+            <button onclick="changeDifficulty('medium', this)" class="active">Arquipélago (Médio)</button>
+            <button onclick="changeDifficulty('hard', this)">Mar de Linhas (Difícil)</button>
+            <button onclick="resetGame()" style="background: #bfa88f;">Redesenhar Rotas</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mapCanvas');
+        const ctx = canvas.getContext('2d');
+        const msg = document.getElementById('msg');
+        
+        let currentColor = '#d62828';
+        let difficulty = 'medium';
+        let nodes = [];
+        let edges = [];
+
+        function init() {
+            generateMapData();
+            drawMap();
+        }
+
+        function pickColor(color, el) {
+            currentColor = color;
+            document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function changeDifficulty(level, el) {
+            difficulty = level;
+            document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            resetGame();
+        }
+
+        function resetGame() {
+            generateMapData();
+            msg.innerText = "Trace as rotas e pinte as colônias sem cruzar cores aliadas!";
+            msg.className = "";
+            drawMap();
+        }
+
+        function generateMapData() {
+            nodes = [];
+            edges = [];
+            let count = difficulty === 'easy' ? 5 : (difficulty === 'medium' ? 8 : 12);
+            
+            for (let i = 0; i < count; i++) {
+                let margin = 100;
+                let cx = Math.random() * (canvas.width - margin * 2) + margin;
+                let cy = Math.random() * (canvas.height - margin * 2) + margin;
+                
+                let tooClose = false;
+                for(let k=0; k<nodes.length; k++) {
+                    if(Math.hypot(nodes[k].cx - cx, nodes[k].cy - cy) < 90) {
+                        tooClose = true; break;
+                    }
+                }
+                if(tooClose && i > 0) { i--; continue; }
+
+                let points = [];
+                let totalPoints = Math.floor(Math.random() * 6) + 12; 
+                let baseRadius = Math.random() * 15 + 35;
+
+                for (let j = 0; j < totalPoints; j++) {
+                    let angle = (j / totalPoints) * Math.PI * 2;
+                    let noise = Math.sin(angle * (Math.random() * 3 + 2)) * 12 + (Math.random() * 10 - 5);
+                    let r = baseRadius + noise;
+                    points.push({
+                        x: cx + Math.cos(angle) * r,
+                        y: cy + Math.sin(angle) * r
+                    });
+                }
+
+                nodes.push({
+                    id: i,
+                    cx: cx,
+                    cy: cy,
+                    points: points,
+                    color: null
+                });
+            }
+
+            for (let i = 0; i < nodes.length; i++) {
+                let connections = difficulty === 'easy' ? 2 : (difficulty === 'medium' ? 3 : 4);
+                let sortedNeighbors = [...nodes]
+                    .filter(n => n.id !== nodes[i].id)
+                    .sort((a, b) => Math.hypot(a.cx - nodes[i].cx, a.cy - nodes[i].cy) - Math.hypot(b.cx - nodes[i].cx, b.cy - nodes[i].cy))
+                    .slice(0, connections);
+
+                sortedNeighbors.forEach(n => {
+                    if (!edges.some(e => (e.from === i && e.to === n.id) || (e.from === n.id && e.to === i))) {
+                        edges.push({ from: i, to: n.id });
+                    }
+                });
+            }
+        }
+
+        function isClickInsideIsland(p, vs) {
+            let x = p.x, y = p.y, inside = false;
+            for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+                let xi = vs[i].x, yi = vs[i].y;
+                let xj = vs[j].x, yj = vs[j].y;
+                let intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        function drawMap() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = 'rgba(139, 90, 43, 0.12)';
+            ctx.lineWidth = 1;
+            let centerPoints = [{x: 150, y: 150}, {x: 650, y: 380}];
+            centerPoints.forEach(cp => {
+                for(let a=0; a<Math.PI*2; a+=Math.PI/8) {
+                    ctx.beginPath();
+                    ctx.moveTo(cp.x, cp.y);
+                    ctx.lineTo(cp.x + Math.cos(a)*1000, cp.y + Math.sin(a)*1000);
+                    ctx.stroke();
+                }
+            });
+
+            ctx.lineWidth = 3;
+            ctx.setLineDash([4, 4]);
+            edges.forEach(e => {
+                ctx.beginPath();
+                ctx.moveTo(nodes[e.from].cx, nodes[e.from].cy);
+                ctx.lineTo(nodes[e.to].cx, nodes[e.to].cy);
+                ctx.strokeStyle = '#4e361d';
+                ctx.stroke();
+            });
+            ctx.setLineDash([]);
+
+            nodes.forEach(n => {
+                ctx.beginPath();
+                ctx.moveTo(n.points[0].x, n.points[0].y);
+                for (let i = 1; i < n.points.length; i++) ctx.lineTo(n.points[i].x, n.points[i].y);
+                ctx.closePath();
+                ctx.strokeStyle = 'rgba(60, 40, 15, 0.3)';
+                ctx.lineWidth = 7;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(n.points[0].x, n.points[0].y);
+                for (let i = 1; i < n.points.length; i++) ctx.lineTo(n.points[i].x, n.points[i].y);
+                ctx.closePath();
+
+                ctx.fillStyle = n.color || '#ebdcb9';
+                ctx.fill();
+                
+                ctx.strokeStyle = varColor('--ink');
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.clip();
+                ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+                ctx.lineWidth = 1;
+                for(let l = -50; l < 100; l += 8) {
+                    ctx.beginPath();
+                    ctx.arc(n.cx, n.cy, Math.abs(l), 0, Math.PI*2);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                ctx.fillStyle = n.color ? '#ffffff' : '#362511';
+                ctx.font = 'bold 15px "Special Elite", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                if(n.color) {
+                    ctx.shadowColor = 'black';
+                    ctx.shadowBlur = 3;
+                }
+                ctx.fillText(`I.${n.id + 1}`, n.cx, n.cy);
+                ctx.shadowBlur = 0;
+            });
+
+            drawCompass(700, 80);
+        }
+
+        function drawCompass(x, y) {
+            ctx.strokeStyle = 'rgba(54, 37, 17, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, 30, 0, Math.PI*2);
+            ctx.stroke();
+            for(let i=0; i<4; i++) {
+                let angle = (i * Math.PI) / 2;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + Math.cos(angle)*35, y + Math.sin(angle)*35);
+                ctx.stroke();
+            }
+            ctx.fillStyle = 'rgba(54, 37, 17, 0.6)';
+            ctx.font = '10px Cinzel';
+            ctx.fillText('N', x, y - 40);
+        }
+
+        function varColor(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const clickPt = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
+            nodes.forEach(n => {
+                if (isClickInsideIsland(clickPt, n.points)) {
+                    n.color = currentColor;
+                    drawMap();
+                    validateMapGraph();
+                }
+            });
+        });
+
+        function validateMapGraph() {
+            const allColored = nodes.every(n => n.color !== null);
+            let conflict = false;
+
+            for (let e of edges) {
+                if (nodes[e.from].color && nodes[e.from].color === nodes[e.to].color) {
+                    conflict = true;
+                    break;
+                }
+            }
+
+            if (conflict) {
+                msg.innerText = "⚔️ Conflito Naval! Rotas diretas conectam domínios de mesma bandeira!";
+                msg.className = "fail";
+            } else if (allColored) {
+                msg.innerText = "⚓ Sucesso Cartográfico! O arquipélago foi dividido perfeitamente!";
+                msg.className = "win";
+            } else {
+                msg.innerText = "Rota segura calculada. Continue o mapeamento marítimo...";
+                msg.className = "";
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
