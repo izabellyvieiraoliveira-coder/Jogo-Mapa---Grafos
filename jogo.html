@@ -121,7 +121,8 @@
 
         .palette {
             display: flex;
-            gap: 20px;
+            gap: 15px;
+            align-items: center;
             background: rgba(0,0,0,0.05);
             padding: 10px 20px;
             border-radius: 30px;
@@ -149,6 +150,30 @@
         #col-3 { background: #003049; } 
         #col-4 { background: #70e000; } 
 
+        .eraser-btn {
+            padding: 8px 14px;
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            font-size: 0.85em;
+            cursor: pointer;
+            border: 2px solid var(--ink);
+            background: #e2d4c9;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .eraser-btn:hover { background: #f4eae1; }
+        .eraser-btn.selected {
+            background: #5c1e14;
+            color: white;
+            border-color: #5c1e14;
+            transform: scale(1.05);
+        }
+
         .controls {
             margin-top: 25px;
             display: flex;
@@ -157,7 +182,7 @@
             justify-content: center;
         }
 
-        button {
+        button.control-btn {
             padding: 10px 20px;
             font-family: 'Cinzel', serif;
             font-weight: bold;
@@ -169,8 +194,8 @@
             transition: all 0.2s;
         }
 
-        button:hover { background: #ebd5b3; transform: translateY(-1px); }
-        button.active { background: var(--ink); color: var(--parchment); box-shadow: none; }
+        button.control-btn:hover { background: #ebd5b3; transform: translateY(-1px); }
+        button.control-btn.active { background: var(--ink); color: var(--parchment); box-shadow: none; }
         
         .fail { color: #a11d1d !important; }
         .win { color: #1e5c1e !important; }
@@ -215,14 +240,18 @@
                 <div class="color-circle" id="col-2" onclick="pickColor('#fcbf49', this)"></div>
                 <div class="color-circle" id="col-3" onclick="pickColor('#003049', this)"></div>
                 <div class="color-circle" id="col-4" onclick="pickColor('#70e000', this)"></div>
+                <button class="eraser-btn" id="eraser" onclick="pickEraser(this)">
+                    <span>🧹</span> Borracha
+                </button>
             </div>
         </div>
 
         <div class="controls">
-            <button onclick="changeDifficulty('easy', this)">Novo Mundo (Fácil)</button>
-            <button onclick="changeDifficulty('medium', this)" class="active">Arquipélago (Médio)</button>
-            <button onclick="changeDifficulty('hard', this)">Mar de Linhas (Difícil)</button>
-            <button onclick="resetGame()" style="background: #bfa88f;">Redesenhar Rotas</button>
+            <button class="control-btn" onclick="changeDifficulty('easy', this)">Novo Mundo (Fácil)</button>
+            <button class="control-btn" onclick="changeDifficulty('medium', this)" class="active">Arquipélago (Médio)</button>
+            <button class="control-btn" onclick="changeDifficulty('hard', this)">Mar de Linhas (Difícil)</button>
+            <button class="control-btn" onclick="clearCurrentColors()" style="background: #c3ad8c;">Reiniciar Jogada</button>
+            <button class="control-btn" onclick="resetGame()" style="background: #bfa88f;">Novo Mapa (Aleatório)</button>
         </div>
     </div>
 
@@ -232,6 +261,7 @@
         const msg = document.getElementById('msg');
         
         let currentColor = '#d62828';
+        let isEraserSelected = false;
         let difficulty = 'medium';
         let nodes = [];
         let edges = [];
@@ -243,6 +273,14 @@
 
         function pickColor(color, el) {
             currentColor = color;
+            isEraserSelected = false;
+            document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('selected'));
+            document.getElementById('eraser').classList.remove('selected');
+            el.classList.add('selected');
+        }
+
+        function pickEraser(el) {
+            isEraserSelected = true;
             document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
         }
@@ -254,6 +292,15 @@
             resetGame();
         }
 
+        // Limpa as cores mantendo o mesmo mapa/grafo atual
+        function clearCurrentColors() {
+            nodes.forEach(n => n.color = null);
+            msg.innerText = "Trace as rotas e pinte as colônias sem cruzar cores aliadas!";
+            msg.className = "";
+            drawMap();
+        }
+
+        // Gera um mapa totalmente novo (com novas rotas)
         function resetGame() {
             generateMapData();
             msg.innerText = "Trace as rotas e pinte as colônias sem cruzar cores aliadas!";
@@ -429,7 +476,11 @@
 
             nodes.forEach(n => {
                 if (isClickInsideIsland(clickPt, n.points)) {
-                    n.color = currentColor;
+                    if (isEraserSelected) {
+                        n.color = null; // Remove a cor voltando ao padrão
+                    } else {
+                        n.color = currentColor; // Pinta com a cor selecionada
+                    }
                     drawMap();
                     validateMapGraph();
                 }
